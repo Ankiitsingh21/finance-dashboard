@@ -5,7 +5,6 @@ import { signToken } from '@/lib/auth';
 import { errorResponse } from '@/lib/errors';
 import { Role } from '@/types';
 
-// Validation schema for registration
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
@@ -16,11 +15,8 @@ const registerSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
-    // Validate input
     const validatedData = registerSchema.parse(body);
     
-    // Create user
     const user = await createUser({
       name: validatedData.name,
       email: validatedData.email,
@@ -28,23 +24,9 @@ export async function POST(request: NextRequest) {
       role: validatedData.role as Role | undefined,
     });
     
-    // Generate token
-    const token = signToken({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    });
+    const token = signToken({ id: user.id, email: user.email, role: user.role });
     
-    return NextResponse.json(
-      {
-        success: true,
-        data: {
-          user,
-          token,
-        },
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({ success: true, data: { user, token } }, { status: 201 });
   } catch (error) {
     return errorResponse(error);
   }

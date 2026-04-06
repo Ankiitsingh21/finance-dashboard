@@ -5,7 +5,6 @@ import { getAllUsers, createUser } from '@/lib/services/user.service';
 import { errorResponse } from '@/lib/errors';
 import { Role, AuthUser } from '@/types';
 
-// Validation schema for creating a user
 const createUserSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
@@ -13,7 +12,6 @@ const createUserSchema = z.object({
   role: z.enum(['VIEWER', 'ANALYST', 'ADMIN']).optional(),
 });
 
-// GET /api/users - Get all users (ADMIN only)
 export const GET = withRole(Role.ADMIN)(
   async (request: NextRequest, { user }: { user: AuthUser }) => {
     try {
@@ -34,16 +32,12 @@ export const GET = withRole(Role.ADMIN)(
   }
 );
 
-// POST /api/users - Create a new user (ADMIN only)
 export const POST = withRole(Role.ADMIN)(
   async (request: NextRequest, { user }: { user: AuthUser }) => {
     try {
       const body = await request.json();
-
-      // Validate input
       const validatedData = createUserSchema.parse(body);
 
-      // Create user
       const newUser = await createUser({
         name: validatedData.name,
         email: validatedData.email,
@@ -51,13 +45,7 @@ export const POST = withRole(Role.ADMIN)(
         role: validatedData.role as Role | undefined,
       });
 
-      return NextResponse.json(
-        {
-          success: true,
-          data: newUser,
-        },
-        { status: 201 }
-      );
+      return NextResponse.json({ success: true, data: newUser }, { status: 201 });
     } catch (error) {
       return errorResponse(error);
     }

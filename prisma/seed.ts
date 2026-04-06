@@ -1,18 +1,20 @@
-import { PrismaClient, Role, RecordType } from '@prisma/client';
+import { PrismaClient, Role, RecordType } from '../src/generated/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({ 
+  connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_3XoUWDCOhHw8@ep-delicate-band-an1wj4if-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+});
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('Starting seed...');
+  console.log('Seeding database...');
 
-  // Clear existing data
   await prisma.financialRecord.deleteMany();
   await prisma.user.deleteMany();
 
   const hashedPassword = await bcrypt.hash('Password123', 10);
 
-  // Create users for each role
   const adminUser = await prisma.user.create({
     data: {
       name: 'Admin User',
@@ -22,7 +24,7 @@ async function main() {
     },
   });
 
-  const analystUser = await prisma.user.create({
+  await prisma.user.create({
     data: {
       name: 'Analyst User',
       email: 'analyst@example.com',
@@ -31,7 +33,7 @@ async function main() {
     },
   });
 
-  const viewerUser = await prisma.user.create({
+  await prisma.user.create({
     data: {
       name: 'Viewer User',
       email: 'viewer@example.com',
@@ -40,18 +42,12 @@ async function main() {
     },
   });
 
-  console.log('Created users:', { adminUser, analystUser, viewerUser });
-
-  // Create sample financial records
-  const categories = ['Salary', 'Sales', 'Investment', 'Rent', 'Utilities', 'Marketing', 'Equipment', 'Consulting'];
   const records = [];
 
-  // Generate records for the past 6 months
   for (let monthOffset = 0; monthOffset < 6; monthOffset++) {
     const date = new Date();
     date.setMonth(date.getMonth() - monthOffset);
 
-    // Income records
     records.push({
       amount: 5000 + Math.random() * 3000,
       type: RecordType.INCOME,
@@ -79,7 +75,6 @@ async function main() {
       userId: adminUser.id,
     });
 
-    // Expense records
     records.push({
       amount: 1500 + Math.random() * 500,
       type: RecordType.EXPENSE,
@@ -117,27 +112,17 @@ async function main() {
     });
   }
 
-  // Create all records
   for (const record of records) {
-    await prisma.financialRecord.create({
-      data: record,
-    });
+    await prisma.financialRecord.create({ data: record });
   }
 
-  console.log(`Created ${records.length} financial records`);
-
-  console.log('Seed completed successfully!');
-  console.log('\nTest accounts:');
-  console.log('  Admin:   admin@example.com / Password123');
-  console.log('  Analyst: analyst@example.com / Password123');
-  console.log('  Viewer:  viewer@example.com / Password123');
+  console.log(`Created 3 users and ${records.length} records`);
+  console.log('Done!');
 }
 
 main()
   .catch((e) => {
-    console.error('Seed error:', e);
+    console.error(e);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .finally(() => prisma.$disconnect());

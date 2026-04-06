@@ -1,30 +1,25 @@
-// Role enum matching Prisma schema
 export enum Role {
   VIEWER = 'VIEWER',
   ANALYST = 'ANALYST',
   ADMIN = 'ADMIN',
 }
 
-// UserStatus enum matching Prisma schema
 export enum UserStatus {
   ACTIVE = 'ACTIVE',
   INACTIVE = 'INACTIVE',
 }
 
-// RecordType enum matching Prisma schema
 export enum RecordType {
   INCOME = 'INCOME',
   EXPENSE = 'EXPENSE',
 }
 
-// Authenticated user payload from JWT
 export interface AuthUser {
   id: string;
   email: string;
   role: Role;
 }
 
-// Generic API response type
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -32,13 +27,11 @@ export interface ApiResponse<T> {
   errors?: Record<string, string[]>;
 }
 
-// Pagination query parameters
 export interface PaginationQuery {
   page?: number;
   limit?: number;
 }
 
-// Record filter query parameters
 export interface RecordFilterQuery extends PaginationQuery {
   type?: RecordType;
   category?: string;
@@ -46,7 +39,6 @@ export interface RecordFilterQuery extends PaginationQuery {
   endDate?: string;
 }
 
-// Pagination response metadata
 export interface PaginationMeta {
   total: number;
   page: number;
@@ -54,13 +46,11 @@ export interface PaginationMeta {
   totalPages: number;
 }
 
-// Paginated response
 export interface PaginatedResponse<T> {
   data: T[];
   pagination: PaginationMeta;
 }
 
-// User type without password
 export interface SafeUser {
   id: string;
   name: string;
@@ -71,7 +61,6 @@ export interface SafeUser {
   updatedAt: Date;
 }
 
-// Financial record type with serialized amount
 export interface FinancialRecordResponse {
   id: string;
   amount: number;
@@ -89,7 +78,6 @@ export interface FinancialRecordResponse {
   };
 }
 
-// Dashboard summary type
 export interface DashboardSummary {
   totalIncome: number;
   totalExpenses: number;
@@ -97,7 +85,6 @@ export interface DashboardSummary {
   totalRecords: number;
 }
 
-// Category totals type
 export interface CategoryTotal {
   category: string;
   income: number;
@@ -105,14 +92,12 @@ export interface CategoryTotal {
   net: number;
 }
 
-// Monthly trend type
 export interface MonthlyTrend {
   month: string;
   income: number;
   expenses: number;
 }
 
-// Create user input
 export interface CreateUserInput {
   name: string;
   email: string;
@@ -120,14 +105,12 @@ export interface CreateUserInput {
   role?: Role;
 }
 
-// Update user input
 export interface UpdateUserInput {
   name?: string;
   role?: Role;
   status?: UserStatus;
 }
 
-// Create record input
 export interface CreateRecordInput {
   amount: number;
   type: RecordType;
@@ -136,7 +119,6 @@ export interface CreateRecordInput {
   notes?: string;
 }
 
-// Update record input
 export interface UpdateRecordInput {
   amount?: number;
   type?: RecordType;
@@ -145,13 +127,11 @@ export interface UpdateRecordInput {
   notes?: string;
 }
 
-// Login credentials
 export interface LoginCredentials {
   email: string;
   password: string;
 }
 
-// Auth response
 export interface AuthResponse {
   user: SafeUser;
   token: string;
