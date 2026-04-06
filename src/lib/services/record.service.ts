@@ -1,4 +1,3 @@
-import { Decimal } from '@prisma/client/runtime/library';
 import prisma from '@/lib/prisma';
 import { AppError } from '@/lib/errors';
 import {
@@ -24,8 +23,8 @@ function toRecordResponse(
 ): FinancialRecordResponse {
   const response: FinancialRecordResponse = {
     id: record.id,
-    amount: record.amount instanceof Decimal 
-      ? record.amount.toNumber() 
+    amount: typeof record.amount === 'object' && 'toNumber' in record.amount
+      ? (record.amount as { toNumber(): number }).toNumber()
       : Number(record.amount),
     type: record.type as RecordType,
     category: record.category,

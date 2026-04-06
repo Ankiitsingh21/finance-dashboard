@@ -1,4 +1,3 @@
-import { Decimal } from '@prisma/client/runtime/library';
 import prisma from '@/lib/prisma';
 import {
   DashboardSummary,
@@ -7,6 +6,15 @@ import {
   FinancialRecordResponse,
   RecordType,
 } from '@/types';
+
+// Helper to safely convert Prisma Decimal to number
+function toNumber(value: unknown): number {
+  if (value === null || value === undefined) return 0;
+  if (typeof value === 'object' && value !== null && 'toNumber' in value) {
+    return (value as { toNumber(): number }).toNumber();
+  }
+  return Number(value);
+}
 
 /**
  * Get dashboard summary statistics
@@ -41,17 +49,8 @@ export async function getSummary(): Promise<DashboardSummary> {
     },
   });
 
-  const totalIncome = incomeResult._sum.amount 
-    ? (incomeResult._sum.amount instanceof Decimal 
-        ? incomeResult._sum.amount.toNumber() 
-        : Number(incomeResult._sum.amount))
-    : 0;
-    
-  const totalExpenses = expenseResult._sum.amount 
-    ? (expenseResult._sum.amount instanceof Decimal 
-        ? expenseResult._sum.amount.toNumber() 
-        : Number(expenseResult._sum.amount))
-    : 0;
+  const totalIncome = toNumber(incomeResult._sum.amount);
+  const totalExpenses = toNumber(expenseResult._sum.amount);
 
   return {
     totalIncome,
@@ -84,11 +83,7 @@ export async function getCategoryTotals(): Promise<CategoryTotal[]> {
 
   records.forEach((record) => {
     const category = record.category;
-    const amount = record._sum.amount 
-      ? (record._sum.amount instanceof Decimal 
-          ? record._sum.amount.toNumber() 
-          : Number(record._sum.amount))
-      : 0;
+    const amount = toNumber(record._sum.amount);
 
     if (!categoryMap.has(category)) {
       categoryMap.set(category, { income: 0, expenses: 0 });
@@ -163,9 +158,7 @@ export async function getMonthlyTrends(months: number = 6): Promise<MonthlyTrend
     const date = new Date(record.date);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     
-    const amount = record.amount instanceof Decimal 
-      ? record.amount.toNumber() 
-      : Number(record.amount);
+    const amount = toNumber(record.amount);
 
     if (monthlyMap.has(monthKey)) {
       const entry = monthlyMap.get(monthKey)!;
@@ -220,9 +213,7 @@ export async function getRecentActivity(
 
   return records.map((record) => ({
     id: record.id,
-    amount: record.amount instanceof Decimal 
-      ? record.amount.toNumber() 
-      : Number(record.amount),
+    amount: toNumber(record.amount),
     type: record.type as RecordType,
     category: record.category,
     date: record.date,
