@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { AppError } from '@/lib/errors';
 import { SafeUser, CreateUserInput, UpdateUserInput, PaginatedResponse, Role, UserStatus } from '@/types';
-import { User } from '@prisma/client';
+import { User } from '@/generated/prisma/client';
 
 const SALT_ROUNDS = 10;
 
