@@ -1,328 +1,202 @@
 # Finance Dashboard
 
-A full-stack finance tracking application with role-based access control. Built this to learn Next.js 14 App Router patterns, Prisma v7 with serverless Postgres, and proper service layer architecture. It handles income/expense tracking with different permission levels for admins, analysts, and viewers.
+A backend-focused finance tracking system with role-based access control, built with Next.js 14 App Router. Each user role gets a different level of access — admins manage everything, analysts view insights, viewers read records only.
 
-**Live Demo:** [GitHub Repository](https://github.com/Ankiitsingh21/finance-dashboard)
+> The frontend is minimal and exists purely to demonstrate the API works end-to-end. The real work is in the backend.
+
+**Live Demo:** [finance-dashboard-ankiit.vercel.app](https://finance-dashboard.vercel.app)  
+**GitHub:** [Ankiitsingh21/finance-dashboard](https://github.com/Ankiitsingh21/finance-dashboard)
+
+---
 
 ## Screenshots
 
-### Login Page
 ![Login](docs/login.png)
 
-### Admin View
-Full access - can view dashboard analytics and manage all records.
+*Login page with test credentials shown for easy evaluation*
 
-![Admin Summary](docs/admin-summary.png)
-![Admin Records](docs/admin-records.png)
-![Admin Categories](docs/admin-categories.png)
-![Admin Recent Activity](docs/admin-recent.png)
+![Admin Dashboard](docs/admin-summary.png)
 
-### Analyst View
-Can view dashboard analytics and records, but cannot create/edit/delete.
+*Admin view — full dashboard access with INR totals across all records*
 
-![Analyst Summary](docs/analyst-summary.png)
-![Analyst Records](docs/analyst-records.png)
+![Records with CRUD](docs/admin-records.png)
 
-### Viewer View
-Limited to viewing records only. Dashboard tabs are hidden.
+*Admin-only Create / Edit / Delete on each record row*
 
-![Viewer Records](docs/viewer-records.png)
-![Viewer Notice](docs/viewer-notice.png)
+![Viewer Restriction](docs/viewer-notice.png)
+
+*Viewer role — locked out of dashboard, records tab only*
+
+---
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Framework | Next.js 14 (App Router) |
-| Language | TypeScript |
-| Database | PostgreSQL (Neon serverless) |
-| ORM | Prisma v7 with PrismaPg adapter |
-| Auth | JWT (jsonwebtoken) + bcryptjs |
-| Validation | Zod |
-| Styling | Tailwind CSS |
-| Currency | INR (Indian Rupees) |
+- **Next.js 14** (App Router) — API routes as service boundaries
+- **TypeScript** — strict mode throughout
+- **PostgreSQL + Prisma v7** — with `PrismaPg` adapter for Neon serverless
+- **JWT + bcryptjs** — stateless auth, passwords hashed with 10 salt rounds
+- **Zod** — runtime request validation with field-level error messages
+- **Tailwind CSS** — minimal frontend
+
+---
 
 ## Getting Started
 
-### Prerequisites
-- Node.js 20+ (v24 has issues with Next.js 14 on Windows)
-- PostgreSQL database (or Neon account)
-
-### Setup
-
-1. Clone the repo
 ```bash
 git clone https://github.com/Ankiitsingh21/finance-dashboard.git
 cd finance-dashboard
-```
-
-2. Install dependencies
-```bash
 npm install
-```
-
-3. Set up environment variables
-```bash
 cp .env.example .env
 ```
 
-4. Update `.env` with your database URL and JWT secret
+Fill in `.env`:
+```env
+DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
+JWT_SECRET="your-secret-key"
+```
 
-5. Run database migrations
 ```bash
 npx prisma migrate dev --name init
-```
-
-6. Seed the database with test data
-```bash
 npm run db:seed
-```
-
-7. Start the dev server
-```bash
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
 
-## Environment Variables
+> **Note:** Use Node.js 20. Node 24 has compatibility issues with Next.js 14 on Windows.
 
-Create a `.env` file in the root directory:
-
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/finance_dashboard?sslmode=require"
-JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
-```
-
-For Neon, the DATABASE_URL will look something like:
-```env
-DATABASE_URL="postgresql://username:password@ep-xxx-xxx.us-east-1.aws.neon.tech/neondb?sslmode=require"
-```
+---
 
 ## Test Accounts
 
-All accounts use password: `Password123`
+Password for all: `Password123`
 
-| Role | Email | Access Level |
-|------|-------|--------------|
-| Admin | admin@example.com | Full CRUD + User management |
-| Analyst | analyst@example.com | View dashboard + records |
-| Viewer | viewer@example.com | View records only |
+| Role | Email |
+|------|-------|
+| Admin | admin@example.com |
+| Analyst | analyst@example.com |
+| Viewer | viewer@example.com |
+
+---
 
 ## Role Permissions
 
 | Action | VIEWER | ANALYST | ADMIN |
 |--------|:------:|:-------:|:-----:|
-| View financial records | Yes | Yes | Yes |
-| View dashboard (Summary, Categories, Recent) | No | Yes | Yes |
-| Create records | No | No | Yes |
-| Edit records | No | No | Yes |
-| Delete records (soft delete) | No | No | Yes |
-| Manage users | No | No | Yes |
+| View records | ✅ | ✅ | ✅ |
+| View dashboard analytics | ❌ | ✅ | ✅ |
+| Create / Edit / Delete records | ❌ | ❌ | ✅ |
+| Manage users | ❌ | ❌ | ✅ |
+
+---
 
 ## API Reference
 
-All endpoints return JSON. Protected routes require `Authorization: Bearer <token>` header.
+All protected routes require: `Authorization: Bearer <token>`
 
-### Authentication
+### Auth
+```
+POST /api/auth/register
+POST /api/auth/login
+```
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/auth/register` | Create new account | No |
-| POST | `/api/auth/login` | Login, returns JWT | No |
+### Records
+```
+GET    /api/records              → all authenticated users
+POST   /api/records              → admin only
+GET    /api/records/:id          → all authenticated users
+PATCH  /api/records/:id          → admin only
+DELETE /api/records/:id          → admin only (soft delete)
+```
 
-**Register/Login Body:**
-```json
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "Password123"
-}
+Query params for `GET /api/records`:
+```
+type        INCOME | EXPENSE
+category    string (case-insensitive)
+startDate   YYYY-MM-DD
+endDate     YYYY-MM-DD
+page        default 1
+limit       default 20
+```
+
+### Dashboard (Analyst + Admin)
+```
+GET /api/dashboard/summary       income, expenses, net balance, count
+GET /api/dashboard/categories    breakdown per category
+GET /api/dashboard/trends        monthly trends (?months=6, max 24)
+GET /api/dashboard/recent        latest records (?limit=10, max 50)
 ```
 
 ### Users (Admin only)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/users` | List all users (paginated) |
-| POST | `/api/users` | Create user |
-| GET | `/api/users/:id` | Get user by ID |
-| PATCH | `/api/users/:id` | Update user (name, role, status) |
-| DELETE | `/api/users/:id` | Delete user |
-
-### Financial Records
-
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|--------|
-| GET | `/api/records` | List records (paginated, filterable) | All authenticated |
-| POST | `/api/records` | Create record | Admin only |
-| GET | `/api/records/:id` | Get record by ID | All authenticated |
-| PATCH | `/api/records/:id` | Update record | Admin only |
-| DELETE | `/api/records/:id` | Soft delete record | Admin only |
-
-**Query Parameters for GET `/api/records`:**
-- `page` - Page number (default: 1)
-- `limit` - Records per page (default: 20)
-- `type` - Filter by INCOME or EXPENSE
-- `category` - Filter by category name
-- `startDate` - Filter from date (YYYY-MM-DD)
-- `endDate` - Filter to date (YYYY-MM-DD)
-
-**Create/Update Record Body:**
-```json
-{
-  "amount": 50000,
-  "type": "INCOME",
-  "category": "Salary",
-  "date": "2026-03-01",
-  "notes": "March salary"
-}
+```
+GET    /api/users
+POST   /api/users
+GET    /api/users/:id
+PATCH  /api/users/:id
+DELETE /api/users/:id
 ```
 
-### Dashboard (Analyst & Admin)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/dashboard/summary` | Total income, expenses, net balance, record count |
-| GET | `/api/dashboard/categories` | Income/expense breakdown by category |
-| GET | `/api/dashboard/trends?months=6` | Monthly income/expense trends |
-| GET | `/api/dashboard/recent?limit=10` | Recent financial activity |
-
-## Response Format
-
-**Success Response:**
+### Response Format
 ```json
-{
-  "success": true,
-  "data": { ... }
-}
+// Success
+{ "success": true, "data": { } }
+
+// Paginated
+{ "success": true, "data": [], "pagination": { "total": 108, "page": 1, "limit": 20, "totalPages": 6 } }
+
+// Error
+{ "success": false, "error": "Unauthorized" }
+
+// Validation error
+{ "success": false, "error": "Validation failed", "errors": { "email": ["Invalid email"] } }
 ```
 
-**Success with Pagination:**
-```json
-{
-  "success": true,
-  "data": [...],
-  "pagination": {
-    "total": 108,
-    "page": 1,
-    "limit": 20,
-    "totalPages": 6
-  }
-}
-```
-
-**Error Response:**
-```json
-{
-  "success": false,
-  "error": "Error message here"
-}
-```
-
-**Validation Error:**
-```json
-{
-  "success": false,
-  "error": "Validation failed",
-  "errors": {
-    "email": ["Invalid email address"],
-    "password": ["Password must be at least 8 characters"]
-  }
-}
-```
+---
 
 ## Project Structure
 
 ```
-finance-dashboard/
-├── docs/                      # Screenshots
-├── prisma/
-│   ├── schema.prisma          # Database schema
-│   └── seed.ts                # Seed script
-├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   │   ├── auth/
-│   │   │   │   ├── login/route.ts
-│   │   │   │   └── register/route.ts
-│   │   │   ├── dashboard/
-│   │   │   │   ├── categories/route.ts
-│   │   │   │   ├── recent/route.ts
-│   │   │   │   ├── summary/route.ts
-│   │   │   │   └── trends/route.ts
-│   │   │   ├── records/
-│   │   │   │   ├── [id]/route.ts
-│   │   │   │   └── route.ts
-│   │   │   └── users/
-│   │   │       ├── [id]/route.ts
-│   │   │       └── route.ts
-│   │   ├── globals.css
-│   │   ├── layout.tsx
-│   │   └── page.tsx           # Dashboard UI
-│   ├── lib/
-│   │   ├── auth.ts            # JWT sign/verify/extract
-│   │   ├── errors.ts          # AppError class + errorResponse
-│   │   ├── middleware.ts      # withAuth, withRole HOFs
-│   │   ├── prisma.ts          # Prisma client singleton
-│   │   └── services/
-│   │       ├── dashboard.service.ts
-│   │       ├── record.service.ts
-│   │       └── user.service.ts
-│   ├── types/
-│   │   └── index.ts           # TypeScript interfaces
-│   └── generated/
-│       └── prisma/            # Generated Prisma client
-├── .env.example
-├── package.json
-├── tailwind.config.ts
-└── tsconfig.json
+src/
+├── app/
+│   ├── api/
+│   │   ├── auth/           register, login
+│   │   ├── records/        CRUD + filtering
+│   │   ├── dashboard/      summary, categories, trends, recent
+│   │   └── users/          user management
+│   └── page.tsx            minimal frontend UI
+├── lib/
+│   ├── auth.ts             JWT sign / verify / extract
+│   ├── middleware.ts        withAuth, withRole HOFs
+│   ├── errors.ts           AppError + centralized errorResponse
+│   ├── prisma.ts           singleton Prisma client
+│   └── services/
+│       ├── user.service.ts
+│       ├── record.service.ts
+│       └── dashboard.service.ts
+└── types/index.ts
 ```
+
+---
 
 ## Design Decisions
 
-### Service Layer Pattern
-Routes don't touch the database directly. All DB operations go through service functions (`user.service.ts`, `record.service.ts`, `dashboard.service.ts`). This keeps routes thin and makes testing easier.
+**Service layer** — route handlers don't touch the DB. All queries go through service files. Keeps routes thin and logic testable.
 
-### Higher-Order Function Middleware
-Instead of traditional middleware, I used HOFs that wrap route handlers:
-- `withAuth(handler)` - Validates JWT, checks user exists and is active
-- `withRole(...roles)(handler)` - Chains with withAuth, checks role permissions
+**HOF middleware** — `withAuth` and `withRole` are higher-order functions that wrap handlers. `withRole` composes on top of `withAuth` so auth logic isn't repeated across routes.
 
-This pattern works well with Next.js App Router where you can't use traditional middleware per-route.
+**Soft delete** — records get a `deletedAt` timestamp instead of being hard deleted. All queries filter `deletedAt: null`. Preserves audit history.
 
-### Soft Delete
-Records aren't actually deleted - they get a `deletedAt` timestamp. All queries filter out soft-deleted records by default. Good for audit trails and accidental deletion recovery.
+**Decimal type** — amounts use Prisma's `Decimal` instead of `Float` to avoid floating point issues on financial data. Converted to `number` only at the response layer.
 
-### Decimal for Money
-Financial amounts use Prisma's `Decimal` type instead of `Float`. Avoids floating point precision issues (0.1 + 0.2 !== 0.3 problem). Converted to `number` only at the API response layer.
+**Zod validation** — schemas live co-located with each route. Returns structured field-level errors, not generic 400s.
 
-### Zod Validation
-All request bodies are validated with Zod schemas before processing. Returns structured error messages with field-level details. Catches issues early before hitting the database.
-
-### JWT in Authorization Header
-Tokens are passed as `Bearer <token>` in the Authorization header, not cookies. Simpler for API-first design and works well with any client (mobile, desktop, etc.).
+---
 
 ## Scripts
 
 ```bash
-npm run dev          # Start dev server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-npm run db:migrate   # Run Prisma migrations
-npm run db:seed      # Seed database with test data
-npm run db:push      # Push schema changes (no migration)
+npm run dev          # development server
+npm run build        # production build
+npm run db:migrate   # run migrations
+npm run db:seed      # seed test data
 ```
-
-## Notes
-
-- Passwords are hashed with bcrypt (10 salt rounds)
-- JWT tokens expire in 7 days
-- All amounts displayed in INR with Indian number formatting
-- The frontend is a minimal dashboard for testing the API - not meant to be production UI
-- Prisma v7 requires the PrismaPg adapter for Neon/serverless PostgreSQL
-
-## License
-
-MIT
