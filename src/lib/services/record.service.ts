@@ -8,7 +8,7 @@ import {
   PaginatedResponse,
   RecordType,
 } from '@/types';
-import { FinancialRecord, User } from '@prisma/client';
+import { FinancialRecord, User } from '@/generated/prisma/client';
 
 type RecordWithCreator = FinancialRecord & {
   createdBy: Pick<User, 'id' | 'name' | 'email'>;
