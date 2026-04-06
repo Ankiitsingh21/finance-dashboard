@@ -4,7 +4,7 @@ A backend-focused finance tracking system with role-based access control, built 
 
 > The frontend is minimal and exists purely to demonstrate the API works end-to-end. The real work is in the backend.
 
-**Live Demo:** [finance-dashboard-ankiit.vercel.app](https://finance-dashboard.vercel.app)  
+**Live Demo:** [finance-dashboard-ankiit.vercel.app](https://finance-dashboard-mu-swart.vercel.app/)  
 **GitHub:** [Ankiitsingh21/finance-dashboard](https://github.com/Ankiitsingh21/finance-dashboard)
 
 ---
